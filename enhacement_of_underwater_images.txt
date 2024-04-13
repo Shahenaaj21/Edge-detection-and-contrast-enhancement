@@ -1,0 +1,63 @@
+close all;
+clear 
+clc;
+%We take a RGB image as input and convert it to grayscale and store it in 
+% another variable,so we can get the mean luminance.
+rgbImage=imread('water2.jpeg');
+rgbImage=im2double(rgbImage);
+grayImage=rgb2gray(rgbImage);
+%Extract the individual red,green, and blue color channels.
+redchannel = rgbImage(:,:,1);
+greenchannel=rgbImage(:, :, 2);
+bluechannel = rgbImage(:,:,3);
+meanR = mean2(redchannel);
+meanG = mean2(greenchannel);
+meanB = mean2(bluechannel);
+meanGray = mean2(grayImage);
+%Make all channels have the same mean
+redchannel = (double(redchannel) *meanGray/meanR);
+greenchannel = (double(greenchannel)*meanGray/meanG);
+bluechannel = (double(bluechannel)*meanGray/meanB);
+%redchannel and blue correction
+redchannel=redchannel-0.3*(meanG-meanR).*greenchannel.*(1-redchannel);
+bluechannel=bluechannel+0.3*(meanG-meanB).*greenchannel.*(1-bluechannel);
+%Recombine seperate color channels into a single,true color RGB image
+rgbImage_white_balance = cat(3,redchannel,greenchannel,bluechannel);
+figure('Name','Color Enhancement');
+subplot(221);
+imshow(redchannel);
+title('Suppressed Red Channel');
+subplot(222);
+imshow(bluechannel);
+title('Enhanced Blue channel');
+subplot(223);
+imshow(greenchannel);
+title('GreenChannel');
+subplot(224);
+imshow(rgbImage_white_balance);
+title('After white balance');
+I = imadjust(rgbImage_white_balance,[],[],0.5);
+J=(rgbImage_white_balance+(rgbImage_white_balance-imgaussfilt(rgbImage_white_balance)));
+figure('Name','Step I-III');
+subplot(221);
+imshow(rgbImage);
+title('Original Image');
+subplot(222);
+imshow(rgbImage_white_balance);
+title('I.White Balance');
+subplot(223);
+imshow(I);
+title('II.Gamma Corrected');
+subplot(224);
+imshow(J);
+title('III.Sharpened');
+XFUS = wfusimg(I,J,'sym4',3,'max','max');
+figure('Name','final Comparison');
+subplot(121);
+imshow(rgbImage);
+title('Original');
+subplot(122);
+imshow((histeq(XFUS)));
+title('IV.Wavelet Fusion');
+
+
